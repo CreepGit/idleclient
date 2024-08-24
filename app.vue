@@ -1,5 +1,7 @@
 <template>
   <div>
-    <GameView />
+    <ClientOnly>
+      <GameView />
+    </ClientOnly>
   </div>
 </template>
