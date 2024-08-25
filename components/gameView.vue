@@ -86,7 +86,7 @@ function sortInventory() {
             itemsOfType[name].count += item.count
         }
     })
-    const newItems = Object.fromEntries(Object.values(itemsOfType).map((item, i) => [i, item]))
+    const newItems = Object.fromEntries(Object.values(itemsOfType).sort((a,b)=>a.name.localeCompare(b.name)).map((item, i) => [i, item]))
     inventoryItems.value = newItems
 }
 function searchForPinItemCount(itemType: string) {
