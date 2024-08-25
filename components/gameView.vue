@@ -1,166 +1,208 @@
 <template>
-    <div>
-        <Card>
-            <template #content>
-                <h1>Game view</h1>
-                <br>
-                <Slider v-model="width" style="max-width: 500px;" />
-                <br>
-                <Button style="margin: 5px;" @click="shuffle" label="Shuffle" />
-                <Button style="margin: 5px;" @click="sortCount" label="Sort Count" />
-                <Button style="margin: 5px;" @click="sortName" label="Sort Name" />
-                <br>
-                <br>
-                <div class="invGrid" :style="{width: width*5+'px'}">
-                    <TransitionGroup name="list">
-                        <template v-for="index in 28">
-                            <InventoryItem @delete="deleteValue(index-1)" v-if="item=inventory[index-1]" :name="item.name" :key="item.icon" :img="'sprite/'+item.icon" :count="item.count" :rarity="item.rarity" />
-                            <div v-else class="emptySlot" :key="index"></div>
-                        </template>
-                        <!-- <InventoryItem v-for="item, index in inventory" :key="item.icon" :img="'sprite/'+item.icon" :count="item.count" :rarity="item.rarity" /> -->
-                    </TransitionGroup>
+    <div class="gameContainer" @contextmenu.prevent>
+        <img class="img" src="https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fbeanselfie204.weebly.com%2Fuploads%2F1%2F2%2F4%2F8%2F124806428%2F892474356.jpg&f=1&nofb=1&ipt=bb738d03790200ca4e03e4526bc8af679feed76b3314b73454cd8372fcd691f7&ipo=images" alt="">
+        <div class="topLeft">
+            <div class="container">
+                <span><i class="pi pi-dollar" style="margin-right: 1ch;"></i>40 021</span>
+                <span><i class="pi pi-sparkles" style="margin-right: 1ch;"></i>1202 xp</span>
+                <span><i class="pi pi-star" style="margin-right: 1ch;"></i>Lvl 10</span>
+            </div>
+            <div class="pins">
+                <div class="pin">
+                    <i class="pi pi-thumbtack"></i>
+                    <span>415 Gold</span>
+                    <img src="/sprite/tile020.png" alt="">
                 </div>
-            </template>
-        </Card>
+                <div class="pin">
+                    <i class="pi pi-thumbtack"></i>
+                    <span>1415 Clay</span>
+                    <img src="/sprite/tile021.png" alt="">
+                </div>
+                <div class="pin">
+                    <i class="pi pi-thumbtack"></i>
+                    <span>3 Bomb</span>
+                    <img src="/sprite/tile001.png" alt="">
+                </div>
+                <div class="pin">
+                    <i class="pi pi-thumbtack" @click="clickPinSearch"></i>
+                    <Transition name="widen">
+                        <input ref="pinSearch" type="text" v-if="showPinSearch" />
+                    </Transition>
+                </div>
+            </div>
+        </div>
+        <Transition name="slideup">
+            <div class="inventoryPanel" v-if="isInventoryOpen">
+                <div class="mainView">
+                    <h1>Stash</h1>
+                    <ItemGrid class="mainInventory" :items="inventoryItems" :slots="100" />
+                </div>
+            </div>
+        </Transition>
+        <div class="bottom">
+            <Button class="button" icon="pi pi-map" />
+            <Button class="button" icon="pi pi-home" />
+            <Button class="button" icon="pi pi-search" />
+            <Button class="button" icon="pi pi-list" @click="isInventoryOpen=!isInventoryOpen" />
+            <Button class="button" icon="pi pi-cog" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-const sprites = [
-    "/sprite/tile000.png",
-    "/sprite/tile001.png",
-    "/sprite/tile002.png",
-    "/sprite/tile003.png",
-    "/sprite/tile004.png",
-    "/sprite/tile005.png",
-    "/sprite/tile006.png",
-    "/sprite/tile007.png",
-    "/sprite/tile008.png",
-    "/sprite/tile009.png",
-    "/sprite/tile010.png",
-    "/sprite/tile011.png",
-    "/sprite/tile012.png",
-    "/sprite/tile013.png",
-    "/sprite/tile014.png",
-    "/sprite/tile015.png",
-    "/sprite/tile016.png",
-    "/sprite/tile017.png",
-    "/sprite/tile018.png",
-    "/sprite/tile019.png",
-    "/sprite/tile020.png",
-    "/sprite/tile021.png",
-    "/sprite/tile022.png",
-    "/sprite/tile023.png",
-]
+import type { InventoryItem } from '~/assets/types-temp';
 
-const inventory = ref<({name: string, icon: string, count: number, rarity: 'normal'|'rare'|'epic'|'legendary'}|null)[]>([
-    { name: 'Pack', icon: "tile000.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Explosive', icon: "tile001.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Bucket', icon: "tile002.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Rope', icon: "tile003.png", count: getCountExpotential(), rarity: "legendary" },
-    { name: 'Spyglass', icon: "tile004.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Map', icon: "tile005.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Pickaxe', icon: "tile006.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Shovel', icon: "tile007.png", count: getCountExpotential(), rarity: "legendary" },
-    { name: 'Fork', icon: "tile008.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Axe', icon: "tile009.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Sword', icon: "tile010.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Fishing Rod', icon: "tile011.png", count: getCountExpotential(), rarity: "legendary" },
-    { name: 'Bow', icon: "tile012.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Stick', icon: "tile013.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Torch', icon: "tile014.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Compass', icon: "tile015.png", count: getCountExpotential(), rarity: "legendary" },
-    { name: 'Mana Potion', icon: "tile016.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Health Potion', icon: "tile017.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Crystal', icon: "tile018.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Gem', icon: "tile019.png", count: getCountExpotential(), rarity: "legendary" },
-    { name: 'Gold', icon: "tile020.png", count: getCountExpotential(), rarity: "normal" },
-    { name: 'Clay', icon: "tile021.png", count: getCountExpotential(), rarity: "rare" },
-    { name: 'Stone', icon: "tile022.png", count: getCountExpotential(), rarity: "epic" },
-    { name: 'Coal', icon: "tile023.png", count: getCountExpotential(), rarity: "legendary" },
-])
-
-const item: any = undefined
-const width = ref(50)
-
-function shuffle() {
-    const toAdd = [...inventory.value]
-    inventory.value = toAdd.sort(() => Math.random() - 0.5)
+const showPinSearch = ref(false)
+const pinSearch = ref<HTMLInputElement|undefined>(undefined)
+function clickPinSearch() {
+    showPinSearch.value = !showPinSearch.value
+    setTimeout(()=>{
+        if (!showPinSearch.value) return
+        pinSearch.value?.focus()
+    }, 50)
 }
-
-function sortCount() {
-    const toAdd = [...inventory.value]
-    inventory.value = toAdd.sort((a: any, b: any) => a.count - b.count)
-}
-
-function sortName() {
-    const toAdd = [...inventory.value]
-    inventory.value = toAdd.sort((a: any, b: any) => a.name.localeCompare(b.name))
-}
-
-function deleteValue(index: number) {
-    const toAdd = [...inventory.value].filter((_, i) => i !== index)
-    inventory.value = toAdd
-}
-
-function getRandomSprite() {
-    const randomIndex = Math.floor(Math.random() * sprites.length)
-    return sprites[randomIndex]
-}
-
-function getCountExpotential() {
-    const random = Math.random() * 33
-    return Math.floor(random * random * random)+1
-}
-
-function getItemCount() {
-    return Math.floor(Math.random() * 20) + 7
-}
-
-function getRarity() {
-    const random = Math.random() * 100
-    if (random < 1) return "legendary"
-    if (random < 5+1) return "epic"
-    if (random < 34+3+1) return "rare"
-    return "normal"
-}
+const isInventoryOpen = ref(false)
+const inventoryItems = ref<Record<string, InventoryItem>>({
+    0: { count: 1415, src: "/sprite/tile021.png", rarity: "normal", name: "Clay" },
+})
 </script>
 
 <style lang="scss" scoped>
-.invGrid {
+.gameContainer {
     position: relative;
-    display: grid;
-    max-width: 690px;
-    // border: 1px solid black;
-    grid-template-columns: repeat(auto-fill, 50px);
+    min-height: 100svh;
+    min-width: 100vw;
+    overflow: hidden;
     user-select: none;
-    justify-content: center;
-    gap: 5px;
-    
-    .widget {
-        position: absolute;
-        right: -15px;
-        width: 20px;
-        height: 20px;
-        background-color: black;
-        top: calc(50% - 10px);
+    -webkit-user-drag: none;
+    --bg: oklch(80% 6% 55deg);
+    --bg2: oklch(60% 6% 35deg);
+}
+
+.img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    z-index: -1;
+}
+
+.topLeft {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    .container {
+        display: inline-flex;
+        flex-direction: column;
+        border: 0px solid black;
+        background-color: var(--bg);
+        border-width: 0 2px 2px 0;
+        border-radius: 0 0 10px 0;
+        padding: 7px;
+        min-width: 30px;
+        min-height: 30px;
+    }
+
+    .pins {
+        margin-top: 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+
+        .pin {
+            display: flex;
+            border: 2px solid black;
+            background-color: var(--bg);
+            gap: 3px;
+            padding: 1px;
+            padding-right: 4px;
+            border-radius: 0 10px 10px 0;
+            width: max-content;
+
+            &:has(i:hover) {
+                background-color: var(--bg2);
+            }
+
+            img {
+                height: 20px;
+            }
+
+            input {
+                width: 100px;
+                background-color: oklch(60% 6% 35deg);
+                border: none;
+            }
+        }
     }
 }
-.list-move,
-.list-enter-active,
-.list-leave-active {
-  transition: all 200ms ease;
+
+.bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
+    display: flex;
+    gap: 5px;
+    padding: 5px 15px;
+    background-color: var(--bg);
+    border-radius: 10px 10px 0 0;
+    border: 2px solid black;
+    border-width: 2px 2px 0 2px;
 }
-.list-enter-from,
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
+
+.button {
+    --p-button-primary-border-color: black;
+    --p-button-primary-hover-border-color: black;
+    --p-button-primary-color: black;
+    --p-button-primary-background: var(--bg2);
+    --p-button-primary-hover-background: var(--bg);
 }
-.emptySlot {
-    width: 50px;
-    height: 50px;
-    border-radius: 15px;
-    background-color: #0003;
-    box-shadow: inset 0 0 20px oklch(35% 0% 60deg);
+
+.inventoryPanel {
+    position: absolute;
+    inset: 50px;
+    max-width: 1000px;
+    margin: 0 auto;
+    bottom: 0;
+    padding: 20px;
+    box-shadow: 0 0 20px 5px black;
+    background: var(--bg);
+
+    .mainView {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        bottom: 15px;
+        top: 15px;
+        left: 15px;
+        width: 66%;
+    }
+
+    .mainInventory {
+        flex-grow: 1;
+        flex-shrink: 1;
+    }
+}
+
+.widen-enter-active, .widen-leave-active {
+    transition: width 150ms !important;
+}
+.widen-enter-to, .widen-leave-from {
+    width: 100px !important;
+}
+.widen-enter-from, .widen-leave-to {
+    width: 0px !important;
+}
+
+.slideup-enter-active, .slideup-leave-active {
+    transition: transform 150ms !important;
+}
+.slideup-enter-to, .slideup-leave-from {
+    transform: translateY(0) !important;
+}
+.slideup-enter-from, .slideup-leave-to {
+    transform: translateY(100%) !important;
 }
 </style>
