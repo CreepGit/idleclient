@@ -8,20 +8,10 @@
                 <span><i class="pi pi-star" style="margin-right: 1ch;"></i>Lvl 10</span>
             </div>
             <div class="pins">
-                <div class="pin">
+                <div class="pin" v-for="[i, art] in [['Gold', 'sprite/tile020.png'],['Clay', 'sprite/tile021.png'],['Bomb', 'sprite/tile001.png'],]">
                     <i class="pi pi-thumbtack"></i>
-                    <span>415 Gold</span>
-                    <img src="/sprite/tile020.png" alt="">
-                </div>
-                <div class="pin">
-                    <i class="pi pi-thumbtack"></i>
-                    <span>1415 Clay</span>
-                    <img src="/sprite/tile021.png" alt="">
-                </div>
-                <div class="pin">
-                    <i class="pi pi-thumbtack"></i>
-                    <span>3 Bomb</span>
-                    <img src="/sprite/tile001.png" alt="">
+                    <span>{{ searchForPinItemCount(i) }} {{ i }}</span>
+                    <img :src=art alt="">
                 </div>
                 <div class="pin">
                     <i class="pi pi-thumbtack" @click="clickPinSearch"></i>
@@ -34,8 +24,11 @@
         <Transition name="slideup">
             <div class="inventoryPanel" v-if="isInventoryOpen">
                 <div class="mainView">
-                    <h1>Stash</h1>
-                    <ItemGrid class="mainInventory" :items="inventoryItems" :slots="100" />
+                    <div style="display: flex; gap: 1rem;">
+                        <h1>Stash</h1>
+                        <Button @click="sortInventory" label="Sort" icon="pi pi-sync" class="button" />
+                    </div>
+                    <ItemGrid class="mainInventory" v-model="inventoryItems" :slots="100" />
                 </div>
             </div>
         </Transition>
@@ -50,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import Button from 'primevue/button';
 import type { InventoryItem } from '~/assets/types-temp';
 
 const showPinSearch = ref(false)
@@ -62,9 +56,46 @@ function clickPinSearch() {
     }, 50)
 }
 const isInventoryOpen = ref(false)
-const inventoryItems = ref<Record<string, InventoryItem>>({
+const inventoryItems = ref<Record<number, InventoryItem>>({
     0: { count: 1415, src: "/sprite/tile021.png", rarity: "normal", name: "Clay" },
+    3: { count: 40, src: "/sprite/tile020.png", rarity: "normal", name: "Gold" },
+    5: { count: 3, src: "/sprite/tile001.png", rarity: "normal", name: "Bomb" },
+    6: { count: 1, src: "/sprite/tile002.png", rarity: "rare", name: "Bucket" },
+    7: { count: 1, src: "/sprite/tile003.png", rarity: "epic", name: "Rope" },
+    8: { count: 1, src: "/sprite/tile004.png", rarity: "legendary", name: "Spyglass" },
+    9: { count: 1, src: "/sprite/tile005.png", rarity: "normal", name: "Map" },
+    10: { count: 1, src: "/sprite/tile006.png", rarity: "normal", name: "Pickaxe" },
+    11: { count: 1, src: "/sprite/tile007.png", rarity: "normal", name: "Shovel" },
+    12: { count: 1, src: "/sprite/tile008.png", rarity: "normal", name: "Hoe" },
+    13: { count: 1, src: "/sprite/tile009.png", rarity: "normal", name: "Axe" },
+    14: { count: 1, src: "/sprite/tile010.png", rarity: "normal", name: "Sword" },
+    15: { count: 1, src: "/sprite/tile011.png", rarity: "normal", name: "Fishing Pole" },
+    16: { count: 1, src: "/sprite/tile012.png", rarity: "normal", name: "Bow" },
+    17: { count: 1, src: "/sprite/tile013.png", rarity: "normal", name: "Stick" },
+    18: { count: 1, src: "/sprite/tile014.png", rarity: "normal", name: "Torch" },
+    19: { count: 1, src: "/sprite/tile015.png", rarity: "normal", name: "Compass" },
+    20: { count: 1, src: "/sprite/tile016.png", rarity: "normal", name: "Mana Potion" },
+    21: { count: 1, src: "/sprite/tile017.png", rarity: "normal", name: "Life Potion" },
 })
+function sortInventory() {
+    const itemsOfType: Record<string, InventoryItem> = {}
+    Object.values(inventoryItems.value).forEach(item => {
+        const name = item.name
+        if (!itemsOfType[name]) itemsOfType[name] = item
+        else {
+            itemsOfType[name].count += item.count
+        }
+    })
+    const newItems = Object.fromEntries(Object.values(itemsOfType).map((item, i) => [i, item]))
+    inventoryItems.value = newItems
+}
+function searchForPinItemCount(itemType: string) {
+    let count = 0
+    Object.entries(inventoryItems.value).forEach(([slot, item]) => {
+        if (item.name.toLowerCase().includes(itemType.toLowerCase())) count += item.count
+    })
+    return count
+}
 </script>
 
 <style lang="scss" scoped>
